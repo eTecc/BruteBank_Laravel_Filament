@@ -12,6 +12,9 @@ class RecordFailedLogin
 
     public function handle(Failed $event): void
     {
+        if ($this->client->settings()->enabled && $this->request->hasSession()) {
+            $this->request->session()->flash('brutebank_failed_login', true);
+        }
         $username = (string) ($event->credentials['email'] ?? $event->credentials['username'] ?? '');
         $this->client->reportFailure((string) $this->request->ip(), $username);
     }

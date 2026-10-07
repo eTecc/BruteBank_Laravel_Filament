@@ -44,7 +44,9 @@ Grant the `manage-brutebank-settings` ability to trusted administrators (for exa
 
 When `BruteBankPlugin` is registered, email 2FA is automatically enforced on authenticated routes in that Filament panel (including Livewire requests). The user is prompted the first time they visit the panel after signing in, provided 2FA is enabled in BruteBank settings and the account has an email address.
 
-For authenticated Laravel routes outside Filament, the package registers `brutebank.blocklist` and `brutebank.2fa` middleware aliases. Apply them after authentication to routes that should be protected; for example:
+Filament panels registering `BruteBankPlugin` automatically enforce the IP blocklist on login pages, panel pages, and subsequent Livewire requests. Blocked requests receive a BruteBank-branded HTTP 403 screen before reaching authentication. Successful failed-login reports invalidate the cached list so the next request sees newly created automatic blocks. Otherwise, externally changed blocks can take up to the cache TTL (five minutes by default) to appear.
+
+For routes outside Filament, the package registers `brutebank.blocklist` and `brutebank.2fa` middleware aliases. Apply the blocklist to public routes (including login) that should be protected, and apply two-factor middleware after authentication; for example:
 
 ```php
 Route::middleware(['auth', 'brutebank.blocklist', 'brutebank.2fa'])->group(function () {
@@ -52,7 +54,7 @@ Route::middleware(['auth', 'brutebank.blocklist', 'brutebank.2fa'])->group(funct
 });
 ```
 
-The blocklist is fetched from BruteBank and cached for five minutes by default. Failed login attempts are sent to `/api/log`. The optional second factor mails a six-digit code to the signed-in user's email; protected routes remain inaccessible until verification. Configure the host app's trusted proxies correctly so `Request::ip()` resolves the actual client IP.
+The blocklist is fetched from BruteBank and cached for five minutes by default. Failed login attempts are sent to `/api/log`. The optional second factor creates a request using `POST /api/2fa`; BruteBank generates and emails the code, not the host application's mailer. The user enters the code on the local verification screen, which submits it server-side to `POST /api/2fa/{id}/verify` with the server credentials. This endpoint must be deployed on the BruteBank backend before using the code-entry flow. Protected routes remain inaccessible until the API confirms the code. Challenges are bound to the signed-in user and session, with a four-minute default local expiry. API failures never bypass verification. Configure the host app's trusted proxies correctly so `Request::ip()` resolves the actual client IP.
 
 Add the host app's scheduler to cron for the 15-minute server heartbeat, as with other Laravel scheduled tasks:
 
@@ -60,4 +62,4 @@ Add the host app's scheduler to cron for the 15-minute server heartbeat, as with
 * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-The API endpoint is fixed to `https://brutebank.io`. The settings page accepts the BruteBank public/secret key; the secret is encrypted at rest using Laravel's application key. `BRUTEBANK_CACHE_TTL`, `BRUTEBANK_HTTP_TIMEOUT`, and `BRUTEBANK_2FA_TTL` provide defaults. CAPTCHA and third-party form auditing are not included in this first release.
+The API endpoint defaults to `https://www.brutebank.io`. The settings page accepts the BruteBank public/secret key; the secret is encrypted at rest using Laravel's application key. `BRUTEBANK_CACHE_TTL`, `BRUTEBANK_HTTP_TIMEOUT`, and `BRUTEBANK_2FA_TTL` provide defaults. 2FA diagnostics log API HTTP status and exception class, never codes, credentials, or response bodies. CAPTCHA and third-party form auditing are not included in this first release.

@@ -14,7 +14,8 @@ class EnforceBlocklist
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->client->isBlocked((string) $request->ip())) {
-            abort(403, 'Access denied by BruteBank security.');
+            return response()->view('brutebank::blocked', [], 403)
+                ->header('Cache-Control', 'no-store, private');
         }
 
         return $next($request);

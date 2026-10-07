@@ -8,6 +8,70 @@ use Illuminate\Support\Facades\Http;
 
 class BruteBankClient
 {
+    public function createTwoFactor(string $user, string $email, string $ip): int
+    {
+        $settings = $this->settings();
+        if (! $settings->enabled || ! $settings->public_key || ! $settings->secret_key) {
+            throw new \RuntimeException('BruteBank credentials are not configured.');
+        }
+
+        $response = $this->twoFactorRequest('post', '/api/2fa', [
+            'public_key' => $settings->public_key,
+            'secret_key' => $settings->secret_key,
+            'user' => $user,
+            'email' => $email,
+            'ip_address' => $ip,
+        ]);
+        $id = $response->json('request.id');
+        if ((int) $response->json('status') !== 1 || ! is_numeric($id) || (int) $id < 1) {
+            throw new \RuntimeException('BruteBank did not create a verification request.');
+        }
+
+        return (int) $id;
+    }
+
+    public function twoFactorStatus(int $id): string
+    {
+        $response = $this->twoFactorRequest('get', '/api/2fa/'.$id);
+        if ((int) $response->json('status') !== 1 || ! is_string($response->json('request.status'))) {
+            throw new \RuntimeException('BruteBank returned an invalid verification status.');
+        }
+
+        return $response->json('request.status');
+    }
+
+    public function verifyTwoFactor(int $id, string $code): bool
+    {
+        $settings = $this->settings();
+        $response = $this->twoFactorRequest('post', '/api/2fa/'.$id.'/verify', [
+            'public_key' => $settings->public_key,
+            'secret_key' => $settings->secret_key,
+            'code' => $code,
+        ]);
+
+        return (int) $response->json('status') === 1 && $response->json('request.status') === 'allowed';
+    }
+
+    private function twoFactorRequest(string $method, string $path, array $payload = []): \Illuminate\Http\Client\Response
+    {
+        $url = rtrim(config('brutebank.api_url'), '/').$path;
+        \Illuminate\Support\Facades\Log::info('BruteBank 2FA: API request', ['method' => $method, 'url' => $url]);
+        try {
+            $request = Http::asJson()->acceptJson()->timeout((int) config('brutebank.http_timeout', 5));
+            $response = $method === 'post' ? $request->post($url, $payload) : $request->get($url);
+            \Illuminate\Support\Facades\Log::info('BruteBank 2FA: API response', [
+                'http_status' => $response->status(),
+                'api_status' => $response->json('status'),
+            ]);
+            $response->throw();
+
+            return $response;
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::error('BruteBank 2FA: API request failed', ['exception_class' => get_class($exception)]);
+            throw $exception;
+        }
+    }
+
     public function settings(): Settings
     {
         return Settings::current();
@@ -71,7 +135,7 @@ class BruteBankClient
         }
 
         try {
-            Http::asJson()->timeout((int) config('brutebank.http_timeout', 5))->post(
+            $response = Http::asJson()->timeout((int) config('brutebank.http_timeout', 5))->post(
                 rtrim(config('brutebank.api_url'), '/').'/api/log',
                 [
                     'public_key' => $settings->public_key,
@@ -84,6 +148,9 @@ class BruteBankClient
                     ]],
                 ]
             );
+            if ($response->successful()) {
+                $this->forgetBlocklist();
+            }
         } catch (\Throwable) {
             // Security reporting must not break the host site's authentication flow.
         }
