@@ -35,7 +35,7 @@ class BruteBankClient
         }
 
         $key = 'brutebank:blocklist:'.hash('sha256', $settings->public_key);
-        $apiUrl = rtrim($settings->api_url ?: config('brutebank.api_url'), '/');
+        $apiUrl = rtrim(config('brutebank.api_url'), '/');
 
         return Cache::remember($key, now()->addSeconds(max(30, (int) config('brutebank.cache_ttl', 300))), function () use ($settings, $apiUrl) {
             try {
@@ -72,7 +72,7 @@ class BruteBankClient
 
         try {
             Http::asJson()->timeout((int) config('brutebank.http_timeout', 5))->post(
-                rtrim($settings->api_url ?: config('brutebank.api_url'), '/').'/api/log',
+                rtrim(config('brutebank.api_url'), '/').'/api/log',
                 [
                     'public_key' => $settings->public_key,
                     'secret_key' => $settings->secret_key,
@@ -98,7 +98,7 @@ class BruteBankClient
 
         try {
             Http::asJson()->timeout((int) config('brutebank.http_timeout', 5))->post(
-                rtrim($settings->api_url ?: config('brutebank.api_url'), '/').'/api/server/heartbeat',
+                rtrim(config('brutebank.api_url'), '/').'/api/server/heartbeat',
                 [
                     'public_key' => $settings->public_key,
                     'secret_key' => $settings->secret_key,

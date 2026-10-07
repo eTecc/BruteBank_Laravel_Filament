@@ -15,7 +15,6 @@ class Settings extends Page
     protected static string $view = 'brutebank::filament.settings';
     protected static ?string $navigationGroup = 'Security';
 
-    public string $apiUrl = '';
     public string $publicKey = '';
     public string $secretKey = '';
     public bool $enabled = false;
@@ -29,7 +28,6 @@ class Settings extends Page
     public function mount(): void
     {
         $settings = BruteBankSettings::current();
-        $this->apiUrl = (string) ($settings->api_url ?: config('brutebank.api_url'));
         $this->publicKey = (string) $settings->public_key;
         // Never hydrate the decrypted server secret into the Filament browser state.
         $this->secretKey = '';
@@ -40,7 +38,6 @@ class Settings extends Page
     public function save(): void
     {
         $data = $this->validate([
-            'apiUrl' => ['required', 'url'],
             'publicKey' => ['nullable', 'string', 'max:128'],
             'secretKey' => ['nullable', 'string', 'max:255'],
             'enabled' => ['boolean'],
@@ -48,7 +45,6 @@ class Settings extends Page
         ]);
 
         $settings = BruteBankSettings::current();
-        $settings->api_url = rtrim($data['apiUrl'], '/');
         $settings->public_key = $data['publicKey'];
         if ($data['secretKey'] !== '') {
             $settings->secret_key = $data['secretKey'];

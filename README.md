@@ -58,4 +58,4 @@ Add the host app's scheduler to cron for the 15-minute server heartbeat, as with
 * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-The settings page supports the API URL and BruteBank public/secret key. The secret is encrypted at rest using Laravel's application key. `BRUTEBANK_API_URL`, `BRUTEBANK_CACHE_TTL`, `BRUTEBANK_HTTP_TIMEOUT`, and `BRUTEBANK_2FA_TTL` provide defaults. CAPTCHA and third-party form auditing are not included in this first release.
+The API endpoint is fixed to `https://brutebank.io`. The settings page accepts the BruteBank public/secret key; the secret is encrypted at rest using Laravel's application key. `BRUTEBANK_CACHE_TTL`, `BRUTEBANK_HTTP_TIMEOUT`, and `BRUTEBANK_2FA_TTL` provide defaults. CAPTCHA and third-party form auditing are not included in this first release.

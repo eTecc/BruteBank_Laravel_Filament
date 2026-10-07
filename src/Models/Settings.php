@@ -9,7 +9,7 @@ class Settings extends Model
 {
     protected $table = 'brutebank_settings';
 
-    protected $fillable = ['api_url', 'public_key', 'secret_key', 'enabled', 'two_factor_enabled'];
+    protected $fillable = ['public_key', 'secret_key', 'enabled', 'two_factor_enabled'];
 
     protected $casts = [
         'enabled' => 'boolean',
