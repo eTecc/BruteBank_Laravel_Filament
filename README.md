@@ -42,7 +42,9 @@ Grant the `manage-brutebank-settings` ability to trusted administrators (for exa
 
 ## Protect routes
 
-The package registers `brutebank.blocklist` and `brutebank.2fa` middleware aliases. Apply them after authentication to routes that should be protected; for example:
+When `BruteBankPlugin` is registered, email 2FA is automatically enforced on authenticated routes in that Filament panel (including Livewire requests). The user is prompted the first time they visit the panel after signing in, provided 2FA is enabled in BruteBank settings and the account has an email address.
+
+For authenticated Laravel routes outside Filament, the package registers `brutebank.blocklist` and `brutebank.2fa` middleware aliases. Apply them after authentication to routes that should be protected; for example:
 
 ```php
 Route::middleware(['auth', 'brutebank.blocklist', 'brutebank.2fa'])->group(function () {
@@ -50,7 +52,7 @@ Route::middleware(['auth', 'brutebank.blocklist', 'brutebank.2fa'])->group(funct
 });
 ```
 
-The blocklist is fetched from BruteBank and cached for five minutes by default. Failed login attempts are sent to `/api/log`. The optional second factor mails a six-digit code to the signed-in user's email; the protected route group remains inaccessible until verification. Configure the host app's trusted proxies correctly so `Request::ip()` resolves the actual client IP.
+The blocklist is fetched from BruteBank and cached for five minutes by default. Failed login attempts are sent to `/api/log`. The optional second factor mails a six-digit code to the signed-in user's email; protected routes remain inaccessible until verification. Configure the host app's trusted proxies correctly so `Request::ip()` resolves the actual client IP.
 
 Add the host app's scheduler to cron for the 15-minute server heartbeat, as with other Laravel scheduled tasks:
 

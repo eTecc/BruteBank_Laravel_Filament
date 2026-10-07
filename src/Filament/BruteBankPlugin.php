@@ -3,6 +3,7 @@
 namespace BruteBank\LaravelFilament\Filament;
 
 use BruteBank\LaravelFilament\Filament\Pages\Settings;
+use BruteBank\LaravelFilament\Http\Middleware\RequireTwoFactor;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
@@ -20,6 +21,8 @@ class BruteBankPlugin implements Plugin
 
     public function boot(Panel $panel): void
     {
-        // The package routes and middleware are registered by the service provider.
+        // Require a second factor on authenticated Filament panel routes. The
+        // middleware itself is a no-op unless two-factor verification is enabled.
+        $panel->authMiddleware([RequireTwoFactor::class], isPersistent: true);
     }
 }
