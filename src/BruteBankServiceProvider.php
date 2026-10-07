@@ -36,6 +36,7 @@ class BruteBankServiceProvider extends ServiceProvider
 
         Schedule::call(fn () => app(BruteBankClient::class)->sendHeartbeat())
             ->everyFifteenMinutes()
+            ->name('brutebank-heartbeat')
             ->withoutOverlapping();
 
         $this->app['router']->aliasMiddleware('brutebank.blocklist', EnforceBlocklist::class);
