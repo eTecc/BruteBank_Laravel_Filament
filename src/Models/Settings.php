@@ -11,13 +11,10 @@ class Settings extends Model
 
     protected $fillable = ['api_url', 'public_key', 'secret_key', 'enabled', 'two_factor_enabled'];
 
-    protected function casts(): array
-    {
-        return [
-            'enabled' => 'boolean',
-            'two_factor_enabled' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'enabled' => 'boolean',
+        'two_factor_enabled' => 'boolean',
+    ];
 
     public function getSecretKeyAttribute(?string $value): string
     {
