@@ -1,6 +1,6 @@
 # BruteBank Laravel + Filament
 
-Installable Composer package for Laravel 10.45+ through 13 and Filament 3. It provides a Filament settings page, BruteBank blocklist enforcement, failed-login reporting, heartbeat reporting, and optional email one-time-code verification.
+Installable Composer package for Laravel 10.45+ through 13 and Filament 3, 4, or 5. It provides a Filament settings page, BruteBank blocklist enforcement, failed-login reporting, heartbeat reporting, and optional email verification.
 
 ## Install from a private GitHub repository
 
@@ -22,7 +22,7 @@ After the maintainer creates and pushes a `0.1.0` Git tag, install the stable re
 composer require brutebank/laravel-filament:^0.1
 ```
 
-The package requires PHP 8.1+, Laravel 10.45+ through 13, and Filament 3. Composer's Laravel package discovery registers its service provider. Then run the package migration:
+The package supports Filament 3, 4, and 5. PHP and Laravel requirements also depend on the selected Filament release: Composer enforces those upstream requirements (PHP 8.1+ for Filament 3, PHP 8.2+ for Filament 4/5). Composer's Laravel package discovery registers its service provider. Then run the package migration:
 
 ```sh
 php artisan migrate

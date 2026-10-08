@@ -9,11 +9,23 @@ use Filament\Pages\Page;
 
 class Settings extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
     protected static ?string $navigationLabel = 'BruteBank';
     protected static ?string $title = 'BruteBank security';
-    protected static string $view = 'brutebank::filament.settings';
-    protected static ?string $navigationGroup = 'Security';
+
+    public static function getNavigationIcon(): ?string
+    {
+        return 'heroicon-o-shield-check';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Security';
+    }
+
+    public function getView(): string
+    {
+        return 'brutebank::filament.settings';
+    }
 
     public string $publicKey = '';
     public string $secretKey = '';
