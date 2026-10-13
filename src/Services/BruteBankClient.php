@@ -158,21 +158,39 @@ class BruteBankClient
 
     public function sendHeartbeat(): void
     {
-        $settings = $this->settings();
-        if (! $settings->enabled || ! $settings->public_key || ! $settings->secret_key) {
-            return;
-        }
-
         try {
-            Http::asJson()->timeout((int) config('brutebank.http_timeout', 5))->post(
+            $settings = $this->settings();
+            if (! $settings->enabled || ! $settings->public_key || ! $settings->secret_key) {
+                return;
+            }
+
+            $key = 'brutebank:heartbeat:'.hash('sha256', $settings->public_key.'|'.$settings->secret_key);
+            // Shared by scheduled and request-triggered heartbeats, including concurrent requests.
+            if (! Cache::add($key, true, 900)) {
+                return;
+            }
+
+            $response = Http::asJson()->timeout((int) config('brutebank.http_timeout', 5))->post(
                 rtrim(config('brutebank.api_url'), '/').'/api/server/heartbeat',
                 [
                     'public_key' => $settings->public_key,
                     'secret_key' => $settings->secret_key,
-                    'plugin_version' => config('brutebank.plugin_version'),
+                    'plugin_version' => \Composer\InstalledVersions::isInstalled('brutebank/laravel-filament')
+                        ? \Composer\InstalledVersions::getPrettyVersion('brutebank/laravel-filament')
+                        : config('brutebank.plugin_version'),
                 ]
             );
+            if (! $response->successful()) {
+                Cache::put($key, true, 60);
+            }
         } catch (\Throwable) {
+            if (isset($key)) {
+                try {
+                    Cache::put($key, true, 60);
+                } catch (\Throwable) {
+                    // Cache outages must not affect the protected site either.
+                }
+            }
             // Heartbeat failures do not affect requests on the protected site.
         }
     }

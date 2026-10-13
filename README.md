@@ -56,7 +56,9 @@ Route::middleware(['auth', 'brutebank.blocklist', 'brutebank.2fa'])->group(funct
 
 The blocklist is fetched from BruteBank and cached for five minutes by default. Failed login attempts are sent to `/api/log`. The optional second factor creates a request using `POST /api/2fa`; BruteBank generates and emails the code, not the host application's mailer. The user enters the code on the local verification screen, which submits it server-side to `POST /api/2fa/{id}/verify` with the server credentials. This endpoint must be deployed on the BruteBank backend before using the code-entry flow. Protected routes remain inaccessible until the API confirms the code. Challenges are bound to the signed-in user and session, with a four-minute default local expiry. API failures never bypass verification. Configure the host app's trusted proxies correctly so `Request::ip()` resolves the actual client IP.
 
-Add the host app's scheduler to cron for the 15-minute server heartbeat, as with other Laravel scheduled tasks:
+Heartbeats are sent after Filament requests and throttled to once every 15 minutes across requests and scheduled runs. Failed requests retry after one minute; API failures never interrupt the panel. Enabled protection and both API keys are required. The heartbeat reports the installed Composer package version.
+
+Keep the host app's scheduler in cron to send heartbeats even when the panel has no traffic:
 
 ```cron
 * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
