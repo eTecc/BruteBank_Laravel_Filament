@@ -11,6 +11,11 @@ class Settings extends Model
 
     protected $fillable = ['public_key', 'secret_key', 'enabled', 'two_factor_enabled'];
 
+    protected $attributes = [
+        'enabled' => false,
+        'two_factor_enabled' => false,
+    ];
+
     protected $casts = [
         'enabled' => 'boolean',
         'two_factor_enabled' => 'boolean',
