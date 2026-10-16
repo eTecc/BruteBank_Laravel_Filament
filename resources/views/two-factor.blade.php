@@ -98,8 +98,8 @@
                     } else if (data.status === 'expired' || data.status === 'denied') {
                         stopped = true;
                         status.textContent = 'Verification expired or was denied. Please sign in again.';
-                    } else if (!response.ok) {
-                        status.textContent = 'Unable to reach BruteBank. We will retry shortly.';
+                    } else if (!response.ok || data.status === 'unavailable') {
+                        status.textContent = 'Verification could not be completed right now. We will try again shortly.';
                     } else {
                         status.textContent = 'Waiting for approval. Complete verification using your BruteBank email link.';
                     }

@@ -35,7 +35,9 @@ class RequireTwoFactor
                     (string) $user->getAuthIdentifier(), $user->email, (string) $request->ip()
                 );
             } catch (\Throwable) {
-                abort(503, 'BruteBank verification is temporarily unavailable. Please try again.');
+                return response()->view('brutebank::two-factor-unavailable', [
+                    'retryUrl' => $request->isMethod('GET') ? $request->fullUrl() : url('/'),
+                ])->header('Cache-Control', 'no-store');
             }
             $request->session()->forget('brutebank_2fa_code');
             $request->session()->put([

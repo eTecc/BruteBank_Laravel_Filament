@@ -60,7 +60,7 @@ class TwoFactorController
         try {
             $status = app(BruteBankClient::class)->twoFactorStatus((int) $id);
         } catch (\Throwable) {
-            return response()->json(['status' => 'unavailable'], 503);
+            return response()->json(['status' => 'unavailable']);
         }
         if ($status !== 'allowed') {
             if (in_array($status, ['denied', 'expired'], true)) {
