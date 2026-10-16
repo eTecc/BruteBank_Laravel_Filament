@@ -14,7 +14,12 @@ class RequireTwoFactor
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || ! Settings::current()->two_factor_enabled) {
+        if (! $user) {
+            return $next($request);
+        }
+
+        $settings = Settings::current();
+        if (! $settings->enabled || ! $settings->two_factor_enabled) {
             return $next($request);
         }
 
