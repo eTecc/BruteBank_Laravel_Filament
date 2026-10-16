@@ -14,6 +14,8 @@ $database = new Manager();
 $database->addConnection(['driver' => 'sqlite', 'database' => ':memory:']);
 $database->setAsGlobal();
 $database->bootEloquent();
+$database->getContainer()->instance('encrypter', new Illuminate\Encryption\Encrypter(random_bytes(32), 'AES-256-CBC'));
+Illuminate\Support\Facades\Facade::setFacadeApplication($database->getContainer());
 $database->schema()->create('brutebank_settings', function (Blueprint $table): void {
     $table->id();
     $table->string('public_key')->nullable();
@@ -49,4 +51,22 @@ $page->mount();
 $assert($page->enabled === true, 'Saved enabled setting must be preserved.');
 $assert($page->twoFactorEnabled === true, 'Saved two-factor setting must be preserved.');
 
-echo "Settings defaults and first-use page mount checks passed.\n";
+// An advanced auto-increment must not cause current() to create a different row on every call.
+Settings::query()->whereKey(1)->delete();
+Settings::query()->insert(['id' => 10, 'public_key' => 'unrelated-record']);
+$settings = Settings::current();
+$assert($settings->getKey() === 1, 'Missing singleton must be recreated with ID 1, regardless of auto-increment.');
+$settings->public_key = 'saved-public-key';
+$settings->secret_key = 'saved-secret-key';
+$settings->enabled = true;
+$settings->two_factor_enabled = true;
+$settings->save();
+$reloaded = Settings::current();
+$assert($reloaded->public_key === 'saved-public-key', 'Saved keys must be read from the same singleton record.');
+$assert($reloaded->secret_key === 'saved-secret-key', 'The encrypted secret must survive reloading.');
+$assert($reloaded->getRawOriginal('secret_key') !== 'saved-secret-key', 'The secret must remain encrypted at rest.');
+$assert($reloaded->enabled === true && $reloaded->two_factor_enabled === true, 'Saved preferences must survive reloading.');
+$assert(Settings::count() === 2, 'Repeated reads must not create additional settings records.');
+$assert(Settings::find(10)->public_key === 'unrelated-record', 'Existing non-singleton records must not be overwritten.');
+
+echo "Settings defaults, first-use mount, and singleton persistence checks passed.\n";

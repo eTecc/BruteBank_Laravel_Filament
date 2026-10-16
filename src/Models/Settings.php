@@ -41,6 +41,7 @@ class Settings extends Model
 
     public static function current(): self
     {
-        return static::query()->firstOrCreate(['id' => 1]);
+        // Preserve the singleton ID even when the table's auto-increment has advanced.
+        return static::unguarded(fn () => static::query()->firstOrCreate(['id' => 1]));
     }
 }
